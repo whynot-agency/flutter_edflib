@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:math';
 
 import 'package:ffi/ffi.dart';
+import 'package:logging/logging.dart';
 
 import './annotations_mode.dart';
 import './bindings.dart';
@@ -63,6 +64,7 @@ class EdfReader {
 
   final Pointer<EdfHdr> _handle = calloc<EdfHdr>();
   final String _fileName;
+  final Logger _log = Logger('EdfReader');
 
   /// File duration in seconds.
   int get fileDuration => _handle.ref.file_duration ~/ EDFLIB_TIME_DIMENSION;
@@ -250,11 +252,11 @@ class EdfReader {
     final int samplesRead =
         dylib.read_digital_samples(_handle.ref.handle, channel, length, buffer);
     if (samplesRead != length) {
-      print("read $samplesRead, less than $length requested!!!");
+      _log.warning("read $samplesRead, less than $length requested!!!");
     }
 
     for (int i = 0; i < samplesRead; i++) {
-      yield buffer.elementAt(i).value;
+      yield buffer[i];
     }
 
     malloc.free(buffer);
@@ -266,11 +268,11 @@ class EdfReader {
     final int samplesRead = dylib.read_physical_samples(
         _handle.ref.handle, channel, length, buffer);
     if (samplesRead != length) {
-      print("read $samplesRead, less than $length requested!!!");
+      _log.warning("read $samplesRead, less than $length requested!!!");
     }
 
     for (int i = 0; i < samplesRead; i++) {
-      yield buffer.elementAt(i).value;
+      yield buffer[i];
     }
 
     malloc.free(buffer);

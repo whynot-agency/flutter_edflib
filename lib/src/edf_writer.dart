@@ -320,7 +320,7 @@ class EdfWriter {
   static Pointer<Int> _copyToNativeIntPointer(List<int> values) {
     final ptr = malloc.allocate<Int>(sizeOf<Int>() * values.length);
     for (int i = 0; i < values.length; i++) {
-      ptr.elementAt(i).value = values[i];
+      ptr[i] = values[i];
     }
     return ptr;
   }
@@ -328,7 +328,7 @@ class EdfWriter {
   static Pointer<Double> _copyToNativeDoublePointer(List<double> values) {
     final ptr = malloc.allocate<Double>(sizeOf<Double>() * values.length);
     for (int i = 0; i < values.length; i++) {
-      ptr.elementAt(i).value = values[i];
+      ptr[i] = values[i];
     }
     return ptr;
   }
