@@ -1,11 +1,11 @@
 name: flutter_edflib
-description: "A new Flutter FFI plugin project."
-version: 0.0.1
+description: "A wrapper library around EDFLib."
+version: 1.0.0
 homepage:
 
 environment:
   sdk: ^3.5.3
-  flutter: '>=3.3.0'
+  flutter: ">=3.3.0"
 
 dependencies:
   ffi: ^2.1.3
