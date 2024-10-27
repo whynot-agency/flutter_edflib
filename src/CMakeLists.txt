@@ -6,11 +6,11 @@ cmake_minimum_required(VERSION 3.10)
 project(flutter_edflib_library VERSION 0.0.1 LANGUAGES C)
 
 add_library(flutter_edflib SHARED
-  "flutter_edflib.c"
+  "edflib.c"
 )
 
 set_target_properties(flutter_edflib PROPERTIES
-  PUBLIC_HEADER flutter_edflib.h
+  PUBLIC_HEADER edflib.h
   OUTPUT_NAME "flutter_edflib"
 )
 

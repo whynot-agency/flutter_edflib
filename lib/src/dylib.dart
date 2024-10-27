@@ -5,7 +5,7 @@ import 'bindings.dart';
 
 EdfLib? _dylib;
 EdfLib get dylib {
-  const String libName = 'edflib';
+  const String libName = 'flutter_edflib';
 
   final DynamicLibrary lib = () {
     if (Platform.isMacOS || Platform.isIOS) {
