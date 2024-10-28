@@ -2,7 +2,7 @@
 
 ## Credits
 
-This is basically a fork of [dartedflib](https://github.com/Praxa-Sense/dartedflib), adjusted to use with Flutter.
+This is just updated version of original package [dartedflib](https://github.com/Praxa-Sense/dartedflib) which implied that libEDF must be bundled to or deployed with the host application.
 
 ## Features
 
