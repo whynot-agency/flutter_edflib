@@ -25,6 +25,7 @@ extension on Array<Char> {
   String toDartString() {
     final stringList = <int>[];
     var i = 0;
+
     while (this[i] != 0) {
       stringList.add(this[i]);
       i++;
@@ -54,9 +55,10 @@ class EdfReader {
   };
 
   /// Open an EDF file in read-only mode.
-  EdfReader(String fileName,
-      {AnnotationsMode annotationsMode = AnnotationsMode.readAllAnnotations})
-      : _fileName = fileName {
+  EdfReader(
+    String fileName, {
+    AnnotationsMode annotationsMode = AnnotationsMode.readAllAnnotations,
+  }) : _fileName = fileName {
     _handle.ref.handle = -1;
     _open(fileName, annotationsMode: annotationsMode);
   }
@@ -93,16 +95,22 @@ class EdfReader {
   /// [start] Start pointer (default is 0).
   /// [length] Length of data to read (default is null, by which the complete data of the channel are returned).
   /// [digital] Will return the signal in original digital values instead of physical values.
-  Iterable<num> readSignal(int channel,
-      {int start = 0, int? length, bool digital = false}) {
+  Iterable<num> readSignal(
+    int channel, {
+    int start = 0,
+    int? length,
+    bool digital = false,
+  }) {
     if (start < 0) {
       return Iterable<num>.empty();
     }
+
     if (length != null && length < 0) {
       return Iterable<num>.empty();
     }
 
     final List<int> numberOfSamples = getNumberOfSamples();
+
     if (0 > channel || channel >= numberOfSamples.length) {
       throw EdfError(
           'Trying to access channel $channel, but only $signalsInFile channels found');
@@ -113,6 +121,7 @@ class EdfReader {
     } else if (length > numberOfSamples[channel]) {
       return Iterable<num>.empty();
     }
+
     if (digital) {
       return _readDigitalSignal(channel, start, length);
     } else {
@@ -123,6 +132,7 @@ class EdfReader {
   /// Returns sample frequencies of all signals.
   List<num> getSampleFrequencies() {
     final result = <num>[];
+
     for (int i = 0; i < signalsInFile; i++) {
       result.add(getSampleFrequency(i));
     }
@@ -142,20 +152,23 @@ class EdfReader {
   /// Get the number of samples per channel.
   List<int> getNumberOfSamples() {
     return List<int>.generate(
-        signalsInFile, (index) => _samplesInChannel(index));
+      signalsInFile,
+      (index) => _samplesInChannel(index),
+    );
   }
 
   /// Retrieve the start DateTime.
   DateTime getStartDatetime() {
     final subsecond = (_handle.ref.starttime_subsecond / 100).round();
     return DateTime(
-        _handle.ref.startdate_year,
-        _handle.ref.startdate_month,
-        _handle.ref.startdate_day,
-        _handle.ref.starttime_hour,
-        _handle.ref.starttime_minute,
-        _handle.ref.starttime_second,
-        subsecond);
+      _handle.ref.startdate_year,
+      _handle.ref.startdate_month,
+      _handle.ref.startdate_day,
+      _handle.ref.starttime_hour,
+      _handle.ref.starttime_minute,
+      _handle.ref.starttime_second,
+      subsecond,
+    );
   }
 
   /// Returns the patient code.
@@ -175,8 +188,11 @@ class EdfReader {
 
   /// Returns the birth date.
   DateTime getBirthdate() {
-    return DateTime(_handle.ref.birthdate_year, _handle.ref.birthdate_month,
-        _handle.ref.birthdate_day);
+    return DateTime(
+      _handle.ref.birthdate_year,
+      _handle.ref.birthdate_month,
+      _handle.ref.birthdate_day,
+    );
   }
 
   /// Returns the additional patient information.
@@ -206,8 +222,10 @@ class EdfReader {
 
   /// Returns the labels for each channel/signal.
   List<String> getSignalLabels() {
-    return List<String>.generate(signalsInFile,
-        (index) => _handle.ref.signalparam[index].label.toDartString());
+    return List<String>.generate(
+      signalsInFile,
+      (index) => _handle.ref.signalparam[index].label.toDartString(),
+    );
   }
 
   /// Returns the label for the given channel.
@@ -247,8 +265,13 @@ class EdfReader {
   Iterable<int> _readDigitalSignal(int channel, int start, int length) sync* {
     dylib.seek(_handle.ref.handle, channel, start, EDFSEEK_SET);
     final buffer = malloc.allocate<Int>(sizeOf<Int>() * length);
-    final int samplesRead =
-        dylib.read_digital_samples(_handle.ref.handle, channel, length, buffer);
+    final int samplesRead = dylib.read_digital_samples(
+      _handle.ref.handle,
+      channel,
+      length,
+      buffer,
+    );
+
     if (samplesRead != length) {
       print("read $samplesRead, less than $length requested!!!");
     }
@@ -264,7 +287,12 @@ class EdfReader {
     dylib.seek(_handle.ref.handle, channel, start, EDFSEEK_SET);
     final buffer = malloc.allocate<Double>(sizeOf<Double>() * length);
     final int samplesRead = dylib.read_physical_samples(
-        _handle.ref.handle, channel, length, buffer);
+      _handle.ref.handle,
+      channel,
+      length,
+      buffer,
+    );
+
     if (samplesRead != length) {
       print("read $samplesRead, less than $length requested!!!");
     }
@@ -276,12 +304,15 @@ class EdfReader {
     malloc.free(buffer);
   }
 
-  void _open(String fileName,
-      {AnnotationsMode annotationsMode = AnnotationsMode.readAllAnnotations}) {
+  void _open(
+    String fileName, {
+    AnnotationsMode annotationsMode = AnnotationsMode.readAllAnnotations,
+  }) {
     final result = dylib.open_file_readonly(
-        fileName.toNativeUtf8().cast<Char>(),
-        _handle,
-        annotationsMode.toNative());
+      fileName.toNativeUtf8().cast<Char>(),
+      _handle,
+      annotationsMode.toNative(),
+    );
 
     if (result != 0) {
       final String msg = _openErrors[_handle.ref.filetype] ?? 'unknown error';

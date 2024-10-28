@@ -42,11 +42,11 @@ class EdfWriter {
   /// Initializes a new edf file at [fileName], ready for writing.
   ///
   /// [numberOfChannels] is the number of channels without the annotation channel.
-  EdfWriter(
-      {required String fileName,
-      required int numberOfChannels,
-      FileType fileType = FileType.edfPlus})
-      : _path = fileName,
+  EdfWriter({
+    required String fileName,
+    required int numberOfChannels,
+    FileType fileType = FileType.edfPlus,
+  })  : _path = fileName,
         _numberOfChannels = numberOfChannels,
         _fileType = fileType,
         _numberOfAnnotations = _determineNumberOfAnnotations(fileType) {
@@ -79,8 +79,12 @@ class EdfWriter {
         });
       }
     }
+
     _handle = dylib.open_file_writeonly(
-        _path.toCharPointer(), _fileType.toNative(), _numberOfChannels);
+      _path.toCharPointer(),
+      _fileType.toNative(),
+      _numberOfChannels,
+    );
 
     if (_handle < 0) {
       throw FileSystemException('Unable to open file for writing', _path);
@@ -166,6 +170,7 @@ class EdfWriter {
     for (var edfSignal in _channels) {
       edfSignal.addAll(signalHeader);
     }
+
     _updateHeader();
   }
 
@@ -215,6 +220,7 @@ class EdfWriter {
   void writeSamples(List<List<num>> dataList, [digital = false]) {
     bool thereAreBlankSampleFrequencies =
         _channels.any((c) => c[_sampleFrequencyField] == null);
+
     if (thereAreBlankSampleFrequencies) {
       throw EdfError("The 'sample_rate' parameter is deprecated. "
           "Please use 'sample_frequency' instead.");
@@ -223,6 +229,7 @@ class EdfWriter {
     if (dataList.isEmpty) {
       throw EdfError('Data list is empty');
     }
+
     if (dataList.length != _channels.length) {
       throw EdfError(
           'Number of channels (${_channels.length}) unequal to length of data (${dataList.length})');
@@ -262,19 +269,24 @@ class EdfWriter {
     while (notAtEnd) {
       dataRecord = <num>[];
       for (int i = 0; i < dataList.length; i++) {
-        dataRecord
-            .addAll(dataList[i].sublist(ind[i], ind[i] + sampleFrequencies[i]));
+        dataRecord.addAll(
+          dataList[i].sublist(ind[i], ind[i] + sampleFrequencies[i]),
+        );
         ind[i] += sampleFrequencies[i];
       }
+
       int success = -1;
+
       if (digital) {
-        final dataRecordNative =
-            _copyToNativeIntPointer(dataRecord.cast<int>());
+        final dataRecordNative = _copyToNativeIntPointer(
+          dataRecord.cast<int>(),
+        );
         success = dylib.blockwrite_digital_samples(_handle, dataRecordNative);
         malloc.free(dataRecordNative);
       } else {
-        final dataRecordNative =
-            _copyToNativeDoublePointer(dataRecord.cast<double>());
+        final dataRecordNative = _copyToNativeDoublePointer(
+          dataRecord.cast<double>(),
+        );
         success = dylib.blockwrite_physical_samples(_handle, dataRecordNative);
         malloc.free(dataRecordNative);
       }
@@ -296,16 +308,22 @@ class EdfWriter {
       lastSampleInd = min(lastSampleInd, sampleFrequencies[i]);
       if (lastSampleInd > 0) {
         lastSamples.setRange(
-            0, lastSampleInd, dataList[i].reversed.take(lastSampleInd));
+          0,
+          lastSampleInd,
+          dataList[i].reversed.take(lastSampleInd),
+        );
         int success = -1;
+
         if (digital) {
-          final lastSamplesNative =
-              _copyToNativeIntPointer(lastSamples.cast<int>());
+          final lastSamplesNative = _copyToNativeIntPointer(
+            lastSamples.cast<int>(),
+          );
           success = dylib.write_digital_samples(_handle, lastSamplesNative);
           malloc.free(lastSamplesNative);
         } else {
-          final lastSamplesNative =
-              _copyToNativeDoublePointer(lastSamples.cast<double>());
+          final lastSamplesNative = _copyToNativeDoublePointer(
+            lastSamples.cast<double>(),
+          );
           success = dylib.write_physical_samples(_handle, lastSamplesNative);
           malloc.free(lastSamplesNative);
         }
@@ -391,12 +409,15 @@ class EdfWriter {
 
     dylib.set_technician(_handle, _technician.toCharPointer());
     dylib.set_recording_additional(
-        _handle, _recordingAdditional.toCharPointer());
+      _handle,
+      _recordingAdditional.toCharPointer(),
+    );
     dylib.set_patientname(_handle, _patientName.toCharPointer());
     dylib.set_patientcode(_handle, _patientCode.toCharPointer());
     dylib.set_patient_additional(_handle, _patientAdditional.toCharPointer());
     dylib.set_equipment(_handle, _equipment.toCharPointer());
     dylib.set_admincode(_handle, _admincode.toCharPointer());
+
     if (_gender != null) {
       dylib.set_gender(_handle, _gender!);
     }
@@ -404,22 +425,29 @@ class EdfWriter {
     dylib.set_datarecord_duration(_handle, _duration);
     dylib.set_number_of_annotation_signals(_handle, _numberOfAnnotations);
     dylib.set_startdatetime(
-        _handle,
-        _recordingStartTime.year,
-        _recordingStartTime.month,
-        _recordingStartTime.day,
-        _recordingStartTime.hour,
-        _recordingStartTime.minute,
-        _recordingStartTime.second);
+      _handle,
+      _recordingStartTime.year,
+      _recordingStartTime.month,
+      _recordingStartTime.day,
+      _recordingStartTime.hour,
+      _recordingStartTime.minute,
+      _recordingStartTime.second,
+    );
 
     if (_recordingStartTime.microsecond > 0) {
       dylib.set_subsecond_starttime(
-          _handle, _recordingStartTime.microsecond * 100);
+        _handle,
+        _recordingStartTime.microsecond * 100,
+      );
     }
 
     if (_birthdate != null) {
       dylib.set_birthdate(
-          _handle, _birthdate!.year, _birthdate!.month, _birthdate!.day);
+        _handle,
+        _birthdate!.year,
+        _birthdate!.month,
+        _birthdate!.day,
+      );
     }
 
     for (int i = 0; i < _numberOfChannels; i++) {
@@ -432,13 +460,25 @@ class EdfWriter {
       dylib.set_digital_maximum(_handle, i, channel[_digitalMaxField]);
       dylib.set_digital_minimum(_handle, i, channel[_digitalMinField]);
       dylib.set_label(
-          _handle, i, (channel[_labelField] as String).toCharPointer());
+        _handle,
+        i,
+        (channel[_labelField] as String).toCharPointer(),
+      );
       dylib.set_physical_dimension(
-          _handle, i, (channel[_dimensionField] as String).toCharPointer());
+        _handle,
+        i,
+        (channel[_dimensionField] as String).toCharPointer(),
+      );
       dylib.set_transducer(
-          _handle, i, (channel[_transducerField] as String).toCharPointer());
+        _handle,
+        i,
+        (channel[_transducerField] as String).toCharPointer(),
+      );
       dylib.set_prefilter(
-          _handle, i, (channel[_prefilterField] as String).toCharPointer());
+        _handle,
+        i,
+        (channel[_prefilterField] as String).toCharPointer(),
+      );
     }
   }
 
@@ -480,6 +520,7 @@ class EdfWriter {
     final digitalMaxBoundary = _fileType.isBdf() ? 8388607 : 32767;
     final int digitalMin = channel[_digitalMinField];
     final int digitalMax = channel[_digitalMaxField];
+
     if (digitalMin < digitalMinBoundary) {
       throw EdfError(
           'Digital minimum for channel $channelIndex ($label) is $digitalMin, '
